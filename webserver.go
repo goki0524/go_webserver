@@ -2,33 +2,40 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strings"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	//オプションを解析
+func sayhelloName(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	//データはサーバのプリント情報に出力
 	fmt.Println(r.Form)
 	fmt.Println("path", r.URL.Path)
-	fmt.Println("scheme", r.URL.Scheme)
 	fmt.Println(r.Form["url_long"])
 	for k, v := range r.Form {
 		fmt.Println("key:", k)
 		fmt.Println("val:", strings.Join(v, ""))
 	}
-	//wに入るものはクライアントに出力
-	fmt.Fprintf(w, "Hi %s!", r.URL.Path[1:])
+	fmt.Fprintf(w, "Hello Go!")
+}
 
+func login(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("method:", r.Method)
+	if r.Method == "GET" {
+		t, _ := template.ParseFiles("login.gtpl")
+		t.Execute(w, nil)
+	} else {
+		r.ParseForm()
+		fmt.Println("username", r.Form["username"])
+		fmt.Println("password", r.Form["password"])
+	}
 }
 
 func main() {
-	//アクセスのルーティングを設定
-	http.HandleFunc("/", handler)
-	//監視するポートを設定
-	err := http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/", sayhelloName)
+	http.HandleFunc("/login", login)
+	err := http.ListenAndServe(":9000", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
